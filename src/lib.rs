@@ -1,4 +1,5 @@
-use std::process::{Command, Output as CommandOutput};
+use std::error::Error;
+use std::process::Command;
 use std::vec::Vec;
 
 use log::info;
@@ -56,26 +57,31 @@ impl SwayWorkspaces {
     }
 }
 
-pub fn swaymsg(args: Vec<&str>) -> CommandOutput {
+pub fn swaymsg(args: Vec<&str>) -> Result<String, Box<dyn Error>> {
     info!("Calling swaymsg with args {:?}", &args);
     let output = Command::new("swaymsg")
         .args(args)
-        .output()
-        .expect("failed to execute process");
-    info!("Exit code: {}", output.status.code().unwrap_or(-1));
-    output
+        .output()?;
+    if let Some(status_code) = output.status.code() {
+        info!("Exit code: {}", &status_code);
+        if status_code != 0 {
+            panic!("Subprocess failed");
+        }
+    } else {
+        panic!("Could not start subprocess");
+    }
+    let stdout = String::from_utf8(output.stdout)?;
+    info!("Standard output: {}", stdout);
+    Ok(stdout)
 }
 
-pub fn swaymsg_and_deserialize<T>(args: Vec<&str>) -> T
+pub fn swaymsg_and_deserialize<T>(args: Vec<&str>) -> Result<T, Box<dyn Error>>
 where
     T: DeserializeOwned,
 {
-    let output = swaymsg(args);
-    let stdout = String::from_utf8(output.stdout).unwrap();
-    info!("Standard output: {}", stdout);
-
-    let sway_data: T = serde_json::from_str(&stdout).unwrap();
-    sway_data
+    let stdout = swaymsg(args)?;
+    let sway_data: T = serde_json::from_str(&stdout)?;
+    Ok(sway_data)
 }
 
 #[cfg(test)]

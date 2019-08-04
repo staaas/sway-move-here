@@ -44,9 +44,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     )?;
 
     // Main part of the program
-    let sway_outputs: SwayOutputs = swaymsg_and_deserialize(vec!["-t", "get_outputs"]);
+    let sway_outputs: SwayOutputs = swaymsg_and_deserialize(vec!["-t", "get_outputs"])?;
     let focused_output = sway_outputs.get_focused_output().unwrap();
-    let sway_workspaces: SwayWorkspaces = swaymsg_and_deserialize(vec!["-t", "get_workspaces"]);
+    let sway_workspaces: SwayWorkspaces = swaymsg_and_deserialize(vec!["-t", "get_workspaces"])?;
     sway_workspaces.move_to_output(&focused_output);
 
     Ok(())
