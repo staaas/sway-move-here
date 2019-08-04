@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use docopt::Docopt;
 use serde::Deserialize;
 use simplelog::{
@@ -23,11 +25,13 @@ struct Args {
     flag_v: bool,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
+    // Parse command line arguments
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
+    // Configure logging subsystem
     let log_level_filter = if args.flag_v {
         LogLevelFilter::Info
     } else {
@@ -37,11 +41,13 @@ fn main() {
         log_level_filter,
         LogConfig::default(),
         LogTerminalMode::Mixed,
-    )
-    .unwrap();
+    )?;
 
+    // Main part of the program
     let sway_outputs: SwayOutputs = swaymsg_and_deserialize(vec!["-t", "get_outputs"]);
     let focused_output = sway_outputs.get_focused_output().unwrap();
     let sway_workspaces: SwayWorkspaces = swaymsg_and_deserialize(vec!["-t", "get_workspaces"]);
     sway_workspaces.move_to_output(&focused_output);
+
+    Ok(())
 }
