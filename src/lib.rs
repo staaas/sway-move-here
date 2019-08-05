@@ -37,39 +37,43 @@ struct SwayWorkspace {
 pub struct SwayWorkspaces(Vec<SwayWorkspace>);
 
 impl SwayWorkspaces {
-    pub fn move_to_output(&self, output: &SwayOutput) {
+    pub fn move_to_output(&self, output: &SwayOutput) -> Result<(), Box<dyn Error>> {
         for workspace in &self.0 {
             if workspace.output != output.name {
                 let workspace_filter = format!("[workspace=\"{}\"]", workspace.name);
-                Command::new("swaymsg")
-                    .args(&[
-                        &workspace_filter,
-                        "move",
-                        "workspace",
-                        "to",
-                        "output",
-                        &output.name,
-                    ])
-                    .output()
-                    .unwrap();
+                swaymsg(vec![
+                    &workspace_filter,
+                    "move",
+                    "workspace",
+                    "to",
+                    "output",
+                    &output.name,
+                ])?;
             }
         }
+        Ok(())
     }
 }
 
 pub fn swaymsg(args: Vec<&str>) -> Result<String, Box<dyn Error>> {
     info!("Calling swaymsg with args {:?}", &args);
-    let output = Command::new("swaymsg")
-        .args(args)
-        .output()?;
-    if let Some(status_code) = output.status.code() {
-        info!("Exit code: {}", &status_code);
-        if status_code != 0 {
-            panic!("Subprocess failed");
+    let output = Command::new("swaymsg").args(args).output()?;
+
+    match output.status.code() {
+        Some(status_code) if status_code == 0 => {
+            info!("Exit code: {}", &status_code);
         }
-    } else {
-        panic!("Could not start subprocess");
+        Some(status_code) => {
+            let err_msg = format!("Command swaymsg failed with exit code {}", &status_code);
+            let err: Box<Error> = From::from(err_msg);
+            return Err(err);
+        }
+        None => {
+            let err: Box<Error> = From::from("Could not start command swaymsg");
+            return Err(err);
+        }
     }
+
     let stdout = String::from_utf8(output.stdout)?;
     info!("Standard output: {}", stdout);
     Ok(stdout)
