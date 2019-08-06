@@ -14,8 +14,10 @@ pub struct SwayOutput {
 }
 
 impl SwayOutput {
-    pub fn get_current_workspace_name(&self) -> String {
-        self.current_workspace.clone()
+    pub fn get_current_workspace(&self) -> SwayWorkspace {
+        let workspace_name = self.current_workspace.clone();
+        let workspace_output = self.name.clone();
+        SwayWorkspace::new(workspace_name, workspace_output)
     }
 }
 
@@ -23,26 +25,48 @@ impl SwayOutput {
 pub struct SwayOutputs(Vec<SwayOutput>);
 
 impl SwayOutputs {
-    pub fn get_focused_output(&self) -> Option<SwayOutput> {
+    pub fn get() -> Result<Self, Box<dyn Error>> {
+        swaymsg_and_deserialize(vec!["-t", "get_outputs"])
+    }
+
+    pub fn get_focused_output(&self) -> Result<SwayOutput, Box<dyn Error>> {
         for output in &self.0 {
             if output.focused {
-                return Some(output.clone());
+                return Ok(output.clone());
             }
         }
-        None
+
+        let err: Box<Error> = From::from("Cannot determine which output is focused");
+        return Err(err);
     }
 }
 
 #[derive(Deserialize, Debug)]
-struct SwayWorkspace {
+pub struct SwayWorkspace {
     name: String,
     output: String,
+}
+
+impl SwayWorkspace {
+    pub fn new(name: String, output: String) -> Self {
+        Self {
+            name: name,
+            output: output,
+        }
+    }
+    pub fn switch(&self) -> Result<(), Box<dyn Error>> {
+        swaymsg(vec!["workspace", &self.name])?;
+        Ok(())
+    }
 }
 
 #[derive(Deserialize, Debug)]
 pub struct SwayWorkspaces(Vec<SwayWorkspace>);
 
 impl SwayWorkspaces {
+    pub fn get() -> Result<Self, Box<dyn Error>> {
+        swaymsg_and_deserialize(vec!["-t", "get_workspaces"])
+    }
     pub fn move_to_output(&self, output: &SwayOutput) -> Result<(), Box<dyn Error>> {
         for workspace in &self.0 {
             if workspace.output != output.name {
@@ -61,7 +85,7 @@ impl SwayWorkspaces {
     }
 }
 
-pub fn swaymsg(args: Vec<&str>) -> Result<String, Box<dyn Error>> {
+fn swaymsg(args: Vec<&str>) -> Result<String, Box<dyn Error>> {
     info!("Calling swaymsg with args {:?}", &args);
     let output = Command::new("swaymsg").args(args).output()?;
 
@@ -85,7 +109,7 @@ pub fn swaymsg(args: Vec<&str>) -> Result<String, Box<dyn Error>> {
     Ok(stdout)
 }
 
-pub fn swaymsg_and_deserialize<T>(args: Vec<&str>) -> Result<T, Box<dyn Error>>
+fn swaymsg_and_deserialize<T>(args: Vec<&str>) -> Result<T, Box<dyn Error>>
 where
     T: DeserializeOwned,
 {

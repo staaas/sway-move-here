@@ -6,7 +6,7 @@ use simplelog::{
     Config as LogConfig, LevelFilter as LogLevelFilter, TermLogger, TerminalMode as LogTerminalMode,
 };
 
-use sway_move_here::{swaymsg, swaymsg_and_deserialize, SwayOutputs, SwayWorkspaces};
+use sway_move_here::{SwayOutputs, SwayWorkspaces};
 
 const USAGE: &'static str = "
 Move all the active workspaces to the focused output in Sway window manager.
@@ -45,14 +45,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Main part of the program
     // 1. Get current state of outputs and workspaces
-    let sway_outputs: SwayOutputs = swaymsg_and_deserialize(vec!["-t", "get_outputs"])?;
-    let focused_output = sway_outputs.get_focused_output().unwrap();
-    let current_workspace_name = focused_output.get_current_workspace_name();
-    let sway_workspaces: SwayWorkspaces = swaymsg_and_deserialize(vec!["-t", "get_workspaces"])?;
+    let sway_outputs = SwayOutputs::get()?;
+    let focused_output = sway_outputs.get_focused_output()?;
+    let current_workspace = focused_output.get_current_workspace();
+    let sway_workspaces = SwayWorkspaces::get()?;
     // 2. Move all the workspaces to the focused output
     sway_workspaces.move_to_output(&focused_output)?;
     // 3. Switch back to the workspace that was focused before we started moving other workspaces
-    swaymsg(vec!["workspace", &current_workspace_name])?;
+    current_workspace.switch()?;
 
     Ok(())
 }
