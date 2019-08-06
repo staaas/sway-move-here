@@ -13,6 +13,12 @@ pub struct SwayOutput {
     current_workspace: String,
 }
 
+impl SwayOutput {
+    pub fn get_current_workspace_name(&self) -> String {
+        self.current_workspace.clone()
+    }
+}
+
 #[derive(Deserialize, Debug)]
 pub struct SwayOutputs(Vec<SwayOutput>);
 
