@@ -12,17 +12,17 @@ const USAGE: &'static str = "
 Move all the active workspaces to the focused output in Sway window manager.
 
 Usage:
-  sway-move-here [-v]
+  sway-move-here [-v...]
   sway-move-here (-h | --help)
 
 Options:
-  -v            Verbose output.
+  -v...         Verbosity level (from 0 to 2).
   -h --help     Show this screen.
 ";
 
 #[derive(Debug, Deserialize)]
 struct Args {
-    flag_v: bool,
+    flag_v: usize,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -32,10 +32,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .unwrap_or_else(|e| e.exit());
 
     // Configure logging subsystem
-    let log_level_filter = if args.flag_v {
-        LogLevelFilter::Info
-    } else {
-        LogLevelFilter::Warn
+    let log_level_filter = match args.flag_v {
+        0 => LogLevelFilter::Warn,
+        1 => LogLevelFilter::Info,
+        _ => LogLevelFilter::Debug,
     };
     TermLogger::init(
         log_level_filter,

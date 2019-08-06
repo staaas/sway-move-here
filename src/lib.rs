@@ -2,7 +2,6 @@ use std::error::Error;
 use std::process::Command;
 use std::vec::Vec;
 
-use log::info;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
@@ -86,12 +85,12 @@ impl SwayWorkspaces {
 }
 
 fn swaymsg(args: Vec<&str>) -> Result<String, Box<dyn Error>> {
-    info!("Calling swaymsg with args {:?}", &args);
+    log::info!("Calling swaymsg with args {:?}", &args);
     let output = Command::new("swaymsg").args(args).output()?;
 
     match output.status.code() {
         Some(status_code) if status_code == 0 => {
-            info!("Exit code: {}", &status_code);
+            log::info!("Exit code: {}", &status_code);
         }
         Some(status_code) => {
             let err_msg = format!("Command swaymsg failed with exit code {}", &status_code);
@@ -105,7 +104,7 @@ fn swaymsg(args: Vec<&str>) -> Result<String, Box<dyn Error>> {
     }
 
     let stdout = String::from_utf8(output.stdout)?;
-    info!("Standard output: {}", stdout);
+    log::debug!("Standard output: {}", stdout);
     Ok(stdout)
 }
 
