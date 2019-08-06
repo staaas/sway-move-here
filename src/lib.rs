@@ -118,11 +118,3 @@ where
     let sway_data: T = serde_json::from_str(&stdout)?;
     Ok(sway_data)
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
