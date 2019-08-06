@@ -9,7 +9,12 @@ In a nutshell it does the following:
 2. Move all the workspaces to the output that is currently focused.
 3. Switch back to the workspace that was originally focused.
 
+The project is developed on [sourcehut][sourcehut], there is also a
+[github][github] mirror.
+
 [swaywm]: https://swaywm.org/
+[sourcehut]: https://git.sr.ht/~staaas/sway-move-here
+[github]: https://github.com/nott/sway-move-here
 
 ## Usage
 
