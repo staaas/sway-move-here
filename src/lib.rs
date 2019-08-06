@@ -93,6 +93,8 @@ fn swaymsg(args: Vec<&str>) -> Result<String, Box<dyn Error>> {
             log::info!("Exit code: {}", &status_code);
         }
         Some(status_code) => {
+            let stderr = String::from_utf8(output.stderr).unwrap_or_else(|_| String::new());
+            log::error!("Standard error: {}", stderr);
             let err_msg = format!("Command swaymsg failed with exit code {}", &status_code);
             let err: Box<Error> = From::from(err_msg);
             return Err(err);
@@ -103,7 +105,7 @@ fn swaymsg(args: Vec<&str>) -> Result<String, Box<dyn Error>> {
         }
     }
 
-    let stdout = String::from_utf8(output.stdout)?;
+    let stdout = String::from_utf8(output.stdout).unwrap_or_else(|_| String::new());
     log::debug!("Standard output: {}", stdout);
     Ok(stdout)
 }
